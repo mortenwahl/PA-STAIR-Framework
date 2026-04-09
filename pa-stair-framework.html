@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PA-STAIR Framework</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f4f2ed;
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 2rem 3rem 1rem;
+    border-bottom: 1px solid #e0ddd6;
+    background: #f4f2ed;
+  }
+
+  header h1 {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #666;
+  }
+
+  header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-top: 4px;
+  }
+
+  header .underline {
+    width: 80px;
+    height: 3px;
+    background: #c0392b;
+    margin-top: 10px;
+    border-radius: 2px;
+  }
+
+  main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 3rem;
+  }
+
+  .legend {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #555;
+  }
+
+  .legend-swatch {
+    width: 28px;
+    height: 18px;
+    border-radius: 4px;
+  }
+
+  #canvas-wrap {
+    position: relative;
+    width: 600px;
+    height: 600px;
+  }
+
+  #c {
+    width: 600px;
+    height: 600px;
+    cursor: pointer;
+    display: block;
+  }
+
+  #hint {
+    font-size: 13px;
+    color: #999;
+    text-align: center;
+    margin-top: 6px;
+    min-height: 20px;
+  }
+
+  #panel {
+    width: 100%;
+    max-width: 600px;
+    margin-top: 1.25rem;
+  }
+
+  #panel-box {
+    background: #fff;
+    border: 1px solid #e5e2db;
+    border-radius: 12px;
+    overflow: hidden;
+    display: none;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .panel-top {
+    padding: 1.25rem 1.5rem 0.5rem;
+  }
+
+  .stage-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 0.9rem;
+    flex-wrap: wrap;
+  }
+
+  .stage-tab {
+    font-size: 12px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    color: #777;
+    background: transparent;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .stage-tab:hover { background: #f5f5f5; }
+  .stage-tab.active { color: #fff; border-color: transparent; font-weight: 600; }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.25rem;
+  }
+
+  .panel-dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .panel-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .edit-area-wrap {
+    padding: 0.5rem 1.5rem 0.75rem;
+  }
+
+  .edit-label {
+    font-size: 11px;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 6px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 100px;
+    background: #fafaf8;
+    border: 1px solid #e5e2db;
+    border-radius: 8px;
+    padding: 10px 13px;
+    font-size: 14px;
+    color: #333;
+    font-family: inherit;
+    line-height: 1.7;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  textarea:focus { border-color: #aaa; }
+
+  .save-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem 1.25rem;
+  }
+
+  .save-btn {
+    font-size: 13px;
+    padding: 6px 20px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    background: transparent;
+    color: #333;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+
+  .save-btn:hover { background: #f0f0f0; }
+
+  .save-confirm {
+    font-size: 12px;
+    color: #2e7d32;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .save-confirm.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Framework</h1>
+  <h2>PA-STAIR — Public Sector Institution</h2>
+  <div class="underline"></div>
+</header>
+
+<main>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:#8ecae6;"></div> Exploration phase</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#2d7ab5;"></div> Analysis phase</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#2c4a6e;"></div> Adaptation phase</div>
+  </div>
+
+  <div id="canvas-wrap">
+    <canvas id="c" width="600" height="600"></canvas>
+  </div>
+
+  <div id="hint">Click any petal stage to explore and edit its content</div>
+
+  <div id="panel">
+    <div id="panel-box">
+      <div class="panel-top">
+        <div class="stage-tabs" id="stage-tabs"></div>
+        <div class="panel-header">
+          <div class="panel-dot" id="panel-dot"></div>
+          <div class="panel-title" id="panel-title"></div>
+        </div>
+      </div>
+      <div class="edit-area-wrap">
+        <div class="edit-label">Stage content — click to edit</div>
+        <textarea id="edit-area" placeholder="Enter content for this stage..."></textarea>
+      </div>
+      <div class="save-bar">
+        <button class="save-btn" id="save-btn">Save changes</button>
+        <span class="save-confirm" id="save-confirm">Saved!</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const TAU = Math.PI * 2, PI = Math.PI;
+const CX = 300, CY = 300;
+const CORE_R = 48;
+const PINK_R = 100;
+
+const STAGE_COLORS = ['#8ecae6', '#2d7ab5', '#2c4a6e'];
+const STAGE_NAMES  = ['Exploration phase', 'Analysis phase', 'Adaptation phase'];
+
+const FLOWERS = [
+  { id: 'third_party', label: 'Third party\nvendor',        angle: -75 },
+  { id: 'governance',  label: 'Governance',                 angle: -28 },
+  { id: 'reflection',  label: 'Reflection\n(Holm)',         angle:  20 },
+  { id: 'sensemaking', label: 'Sensemaking',                angle:  65 },
+  { id: 'competence',  label: 'Competence\nalignment',      angle: 112 },
+  { id: 'trust',       label: 'Trust &\ntransparency',      angle: 158 },
+  { id: 'org_embed',   label: 'Organisational\nembedding',  angle: 205 },
+];
+
+const INNER_SEGS = [
+  { label: 'Technology',   color: '#b06acc', start: -PI*0.42, end:  PI*0.52 },
+  { label: 'Organisation', color: '#e07bb5', start:  PI*0.52, end:  PI*1.35 },
+  { label: 'Human',        color: '#cc5fa0', start:  PI*1.35, end:  PI*2.58 },
+];
+
+const BASE_RI = PINK_R + 3;
+const BASE_SEGS = [
+  { ri: BASE_RI,      ro: BASE_RI + 36, sp: 0.52 },
+  { ri: BASE_RI + 38, ro: BASE_RI + 68, sp: 0.46 },
+  { ri: BASE_RI + 70, ro: BASE_RI + 96, sp: 0.40 },
+];
+
+const content = {};
+FLOWERS.forEach(f => {
+  content[f.id] = [
+    'Describe the Exploration phase for ' + f.label.replace('\n', ' ') + ' here. Click to edit this text.',
+    'Describe the Analysis phase for '    + f.label.replace('\n', ' ') + ' here. Click to edit this text.',
+    'Describe the Adaptation phase for '  + f.label.replace('\n', ' ') + ' here. Click to edit this text.',
+  ];
+});
+
+function getSegs(isActive, activeStep) {
+  if (!isActive) return BASE_SEGS;
+  return BASE_SEGS.map((s, i) => {
+    if (i === activeStep) {
+      return { ri: s.ri - (i === 0 ? 6 : 0), ro: s.ro + (i === 0 ? 52 : i === 1 ? 46 : 40), sp: s.sp + (i === 0 ? 0.22 : i === 1 ? 0.18 : 0.15) };
+    }
+    return { ri: s.ri, ro: s.ro, sp: s.sp * 0.72 };
+  });
+}
+
+const active = { flower: null, step: null };
+const hits = [];
+
+function toR(d) { return d * PI / 180; }
+
+function petalPath(ctx, angle, ri, ro, sp) {
+  const h = sp / 2, a1 = angle - h, a2 = angle + h;
+  ctx.beginPath();
+  ctx.arc(CX, CY, ri, a1, a2);
+  const o1x = CX + ro * Math.cos(a2), o1y = CY + ro * Math.sin(a2);
+  const o2x = CX + ro * Math.cos(a1), o2y = CY + ro * Math.sin(a1);
+  const capX = CX + (ro + 20) * Math.cos(angle), capY = CY + (ro + 20) * Math.sin(angle);
+  ctx.lineTo(o1x, o1y);
+  ctx.quadraticCurveTo(capX, capY, o2x, o2y);
+  ctx.closePath();
+}
+
+function inPetal(px, py, angle, ri, ro, sp) {
+  const dx = px - CX, dy = py - CY, d = Math.sqrt(dx*dx + dy*dy);
+  if (d < ri - 4 || d > ro + 24) return false;
+  let a = Math.atan2(dy, dx) - angle;
+  while (a >  PI) a -= TAU;
+  while (a < -PI) a += TAU;
+  return Math.abs(a) < sp / 2 + 0.06;
+}
+
+function rotLabel(ctx, text, x, y, angle, size, weight, color) {
+  ctx.save();
+  ctx.translate(x, y);
+  let rot = angle + PI / 2;
+  if (Math.cos(rot + PI / 2) < 0) rot += PI;
+  ctx.rotate(rot);
+  ctx.font = `${weight} ${size}px 'Segoe UI', system-ui, sans-serif`;
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const lines = text.split('\n');
+  const lh = size * 1.35;
+  const oy = -(lines.length - 1) * lh / 2;
+  lines.forEach((l, i) => ctx.fillText(l, 0, oy + i * lh));
+  ctx.restore();
+}
+
+function draw() {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 600, 600);
+  hits.length = 0;
+
+  FLOWERS.forEach(f => {
+    const angle = toR(f.angle);
+    const isAct = active.flower === f.id;
+    const segs  = getSegs(isAct, active.step);
+    const maxRo = Math.max(...segs.map(s => s.ro));
+    const blobD = maxRo + 26;
+
+    const bx = CX + blobD * Math.cos(angle), by = CY + blobD * Math.sin(angle);
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.rotate(angle + PI / 2);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 40, 23, 0, 0, TAU);
+    ctx.fillStyle = '#c4c48a';
+    ctx.globalAlpha = 0.88;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    segs.forEach((seg, si) => {
+      const isStepAct = isAct && active.step === si;
+      petalPath(ctx, angle, seg.ri, seg.ro, seg.sp);
+      ctx.fillStyle = STAGE_COLORS[si];
+      ctx.globalAlpha = isStepAct ? 1 : isAct ? 0.7 : 0.92;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      hits.push({ flower: f.id, step: si, angle, ri: seg.ri, ro: seg.ro, sp: seg.sp });
+    });
+
+    rotLabel(ctx, f.label, bx, by, angle, 9.5, '600', '#3a3a1e');
+  });
+
+  ctx.beginPath();
+  ctx.arc(CX, CY, PINK_R, 0, TAU);
+  ctx.fillStyle = '#f0a0cc';
+  ctx.fill();
+
+  INNER_SEGS.forEach(seg => {
+    ctx.beginPath();
+    ctx.moveTo(CX, CY);
+    ctx.arc(CX, CY, PINK_R - 5, seg.start, seg.end);
+    ctx.closePath();
+    ctx.fillStyle = seg.color;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+    const mid = (seg.start + seg.end) / 2;
+    const td  = (PINK_R - 5) * 0.64;
+    const tx  = CX + td * Math.cos(mid), ty = CY + td * Math.sin(mid);
+    ctx.save();
+    ctx.translate(tx, ty);
+    let rot = mid + PI / 2;
+    if (Math.cos(rot + PI / 2) < 0) rot += PI;
+    ctx.rotate(rot);
+    ctx.font = "600 10px 'Segoe UI', system-ui, sans-serif";
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(seg.label, 0, 0);
+    ctx.restore();
+  });
+
+  ctx.beginPath();
+  ctx.arc(CX, CY, CORE_R, 0, TAU);
+  ctx.fillStyle = '#5c1a7a';
+  ctx.fill();
+  ctx.font = "700 11px 'Segoe UI', system-ui, sans-serif";
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('PA-STAIR', CX, CY - 6);
+  ctx.font = "400 9px 'Segoe UI', system-ui, sans-serif";
+  ctx.fillText('Framework', CX, CY + 7);
+}
+
+document.getElementById('c').addEventListener('click', function (e) {
+  const rect = this.getBoundingClientRect();
+  const sx = 600 / rect.width, sy = 600 / rect.height;
+  const px = (e.clientX - rect.left) * sx, py = (e.clientY - rect.top) * sy;
+  let hit = null;
+  for (let i = hits.length - 1; i >= 0; i--) {
+    const h = hits[i];
+    if (inPetal(px, py, h.angle, h.ri, h.ro, h.sp)) { hit = h; break; }
+  }
+  if (!hit || (active.flower === hit.flower && active.step === hit.step)) {
+    active.flower = null; active.step = null;
+    closePanel(); draw(); return;
+  }
+  active.flower = hit.flower; active.step = hit.step;
+  draw();
+  openPanel(FLOWERS.find(f => f.id === hit.flower), hit.step);
+});
+
+function closePanel() {
+  document.getElementById('panel-box').style.display = 'none';
+  document.getElementById('hint').textContent = 'Click any petal stage to explore and edit its content';
+}
+
+function openPanel(flower, si) {
+  document.getElementById('panel-box').style.display = 'block';
+  document.getElementById('hint').textContent = '';
+  document.getElementById('panel-title').textContent = flower.label.replace('\n', ' ');
+  document.getElementById('panel-dot').style.background = STAGE_COLORS[si];
+
+  const tabs = document.getElementById('stage-tabs');
+  tabs.innerHTML = '';
+  STAGE_NAMES.forEach((name, i) => {
+    const b = document.createElement('button');
+    b.className = 'stage-tab' + (i === si ? ' active' : '');
+    b.textContent = name;
+    if (i === si) b.style.background = STAGE_COLORS[i];
+    b.onclick = () => { active.step = i; draw(); openPanel(flower, i); };
+    tabs.appendChild(b);
+  });
+
+  const ta = document.getElementById('edit-area');
+  ta.value = content[flower.id][si];
+  ta.style.borderColor = STAGE_COLORS[si] + '88';
+  ta.oninput = () => document.getElementById('save-confirm').classList.remove('show');
+
+  document.getElementById('save-btn').onclick = () => {
+    content[flower.id][si] = ta.value;
+    const sc = document.getElementById('save-confirm');
+    sc.classList.add('show');
+    setTimeout(() => sc.classList.remove('show'), 2000);
+  };
+}
+
+draw();
+</script>
+</body>
+</html>
