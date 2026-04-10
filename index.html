@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PA-STAIR Framework</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0ede6; color: #1a1a1a; min-height: 100vh; }
+header { padding: 2rem 3rem 1.25rem; }
+header h2 { font-size: 24px; font-weight: 900; color: #2a3a0a; letter-spacing: 0.04em; text-transform: uppercase; }
+header .underline { width: 160px; height: 3px; background: #c0392b; margin-top: 8px; border-radius: 2px; }
+main { display: flex; align-items: flex-start; padding: 0.5rem 2rem 3rem; gap: 1.2rem; }
+.col-legend { flex: 0 0 170px; padding-top: 1rem; }
+.legend-heading { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #999; margin-bottom: 1.2rem; }
+.legend-item { display: flex; align-items: center; gap: 12px; margin-bottom: 1.4rem; }
+.legend-petal { width: 34px; height: 52px; flex-shrink: 0; }
+.legend-label { font-size: 13px; color: #444; font-weight: 500; line-height: 1.3; }
+.col-canvas { flex: 0 0 700px; display: flex; flex-direction: column; align-items: center; }
+#c { width: 700px; height: 700px; cursor: pointer; display: block; }
+#hint { font-size: 13px; color: #aaa; text-align: center; margin-top: 4px; min-height: 20px; font-style: italic; }
+.col-right { flex: 1; min-width: 0; padding-top: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+.panel-placeholder { background: #e8e5de; border-radius: 14px; padding: 2rem; text-align: center; color: #bbb; font-size: 13px; font-style: italic; min-height: 160px; display: flex; align-items: center; justify-content: center; }
+.panel-box { background: #fff; border: 1px solid #e0ddd6; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 14px rgba(0,0,0,0.06); display: none; }
+.panel-box.visible { display: block; }
+.pin-strip { display: none; background: #2d7ab5; color: #fff; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 5px 1.2rem; align-items: center; gap: 7px; }
+.pin-strip.visible { display: flex; }
+.pin-dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; opacity: 0.8; }
+.panel-top { padding: 1rem 1.2rem 0.4rem; }
+.stage-tabs { display: flex; gap: 6px; margin-bottom: 0.75rem; flex-wrap: wrap; }
+.stage-tab { font-size: 12px; padding: 5px 13px; border-radius: 20px; border: 1px solid #ddd; cursor: pointer; color: #777; background: transparent; font-family: inherit; transition: all 0.15s; }
+.stage-tab:hover { background: #f5f5f5; }
+.stage-tab.active { color: #fff; border-color: transparent; font-weight: 600; }
+.panel-header { display: flex; align-items: center; gap: 9px; }
+.panel-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.panel-title { font-size: 16px; font-weight: 700; color: #1a1a1a; }
+.panel-stage-lbl { font-size: 11px; color: #bbb; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.3rem 1.2rem 0; }
+.edit-wrap { padding: 0.5rem 1.2rem 0.6rem; }
+.edit-lbl { font-size: 10px; color: #ccc; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
+textarea { width: 100%; min-height: 88px; background: #fafaf8; border: 1px solid #e8e5df; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #333; font-family: inherit; line-height: 1.7; resize: vertical; outline: none; transition: border-color 0.15s; }
+textarea:focus { border-color: #aaa; background: #fff; }
+.panel-footer { display: flex; align-items: center; justify-content: space-between; padding: 0 1.2rem 1rem; gap: 8px; flex-wrap: wrap; }
+.btn { font-size: 12px; padding: 6px 15px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; background: transparent; color: #333; font-family: inherit; transition: all 0.15s; white-space: nowrap; }
+.btn:hover { background: #f0f0f0; }
+.btn-pin { border-color: #2d7ab5; color: #2d7ab5; font-weight: 600; }
+.btn-pin:hover { background: #eef5fc; }
+.btn-pin.pinned { background: #2d7ab5; color: #fff; }
+.btn-pin.pinned:hover { background: #1f5f8a; }
+.save-confirm { font-size: 12px; color: #2e7d32; opacity: 0; transition: opacity 0.3s; }
+.save-confirm.show { opacity: 1; }
+.notes-header { padding: 0.9rem 1.2rem 0.4rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f0ede6; }
+.notes-title { font-size: 13px; font-weight: 700; color: #555; }
+.notes-context { font-size: 11px; color: #bbb; font-style: italic; }
+.notes-wrap { padding: 0.5rem 1.2rem 0.8rem; }
+.notes-wrap textarea { min-height: 75px; }
+.notes-footer { padding: 0 1.2rem 0.9rem; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <h2>Framework — Public Sector Institution</h2>
+  <div class="underline"></div>
+</header>
+<main>
+  <div class="col-legend">
+    <div class="legend-heading">Phases</div>
+    <div class="legend-item">
+      <svg class="legend-petal" viewBox="0 0 34 52"><path d="M4,48 L8,9 Q17,-1 26,9 L30,48 Q17,54 4,48Z" fill="#2c4a6e"/></svg>
+      <div class="legend-label">Adaptation<br>phase</div>
+    </div>
+    <div class="legend-item">
+      <svg class="legend-petal" viewBox="0 0 34 52"><path d="M4,48 L8,9 Q17,-1 26,9 L30,48 Q17,54 4,48Z" fill="#2d7ab5"/></svg>
+      <div class="legend-label">Analysis<br>phase</div>
+    </div>
+    <div class="legend-item">
+      <svg class="legend-petal" viewBox="0 0 34 52"><path d="M4,48 L8,9 Q17,-1 26,9 L30,48 Q17,54 4,48Z" fill="#8ecae6"/></svg>
+      <div class="legend-label">Exploration<br>phase</div>
+    </div>
+  </div>
+  <div class="col-canvas">
+    <canvas id="c" width="700" height="700"></canvas>
+    <div id="hint">Click any stage in a flower to explore its content</div>
+  </div>
+  <div class="col-right">
+    <div class="panel-placeholder" id="placeholder-info">Click a petal stage to see its information here</div>
+    <div class="panel-box" id="info-panel">
+      <div class="pin-strip" id="pin-strip"><div class="pin-dot"></div><span id="pin-strip-text">Phase pinned</span></div>
+      <div class="panel-top">
+        <div class="stage-tabs" id="stage-tabs"></div>
+        <div class="panel-header"><div class="panel-dot" id="panel-dot"></div><div class="panel-title" id="panel-title"></div></div>
+      </div>
+      <div class="panel-stage-lbl" id="panel-stage-lbl"></div>
+      <div class="edit-wrap">
+        <div class="edit-lbl">Content — click to edit</div>
+        <textarea id="info-textarea" placeholder="Describe this phase…"></textarea>
+      </div>
+      <div class="panel-footer">
+        <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-pin" id="pin-btn">Choose this phase</button>
+          <button class="btn" id="save-btn">Save</button>
+        </div>
+        <span class="save-confirm" id="save-confirm">Saved!</span>
+      </div>
+    </div>
+    <div class="panel-box" id="notes-panel" style="display:block;">
+      <div class="notes-header">
+        <div class="notes-title">My notes</div>
+        <div class="notes-context" id="notes-context">No phase selected</div>
+      </div>
+      <div class="notes-wrap"><textarea id="notes-textarea" placeholder="Write your own notes here…"></textarea></div>
+      <div class="notes-footer">
+        <button class="btn" id="notes-save-btn">Save note</button>
+        <span class="save-confirm" id="notes-confirm">Saved!</span>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+const TAU=Math.PI*2,PI=Math.PI,CX=350,CY=350,CORE_R=62,PINK_R=135,BR=PINK_R+2;
+const BASE=[{ri:BR,ro:BR+68,sp:0.64},{ri:BR+70,ro:BR+118,sp:0.56},{ri:BR+120,ro:BR+158,sp:0.48}];
+const SC=['#8ecae6','#2d7ab5','#2c4a6e'];
+const SN=['Exploration phase','Analysis phase','Adaptation phase'];
+
+// Inner ring spans:
+// Technology:   from -90° to  30°  (top-right)
+// Organisation: from  30° to 150°  (bottom)
+// Human:        from 150° to 270°  (left/top-left)
+const INNER=[
+  {label:'Technology',   color:'#b56fcc', start:-PI/2,       end: PI/6},
+  {label:'Organisation', color:'#de7db8', start: PI/6,       end: PI*5/6},
+  {label:'Human',        color:'#c85aaa', start: PI*5/6,     end: PI*3/2},
+];
+
+// Flowers positioned to bloom from their parent segments:
+// Technology  (-90° to 30°):  Third party vendor (-72°), Governance (-20°)
+// Organisation (30° to 150°): Sensemaking (62°), Competence alignment (108°), Organisational embedding (152°) — shared with Tech: Governance(-20°), shared with Human: Competence(108°)
+// Human (150° to 270°):       Trust & transparency (200°), Reflection (248°)
+// Shared flowers sit at boundaries:
+//   Governance        → boundary Tech/Org  → ~5°   (but we place at -20 inside Tech zone, label flipped)
+//   Competence align  → boundary Org/Human → ~148° (inside Org zone near boundary)
+//   Org embedding     → boundary Org/Tech  → ~150° placed at 150 near boundary — move to 152
+const FLOWERS=[
+  {id:'third_party', label:'Third party\nvendor',        angle: -72,  flipLabel: false},
+  {id:'governance',  label:'Governance',                 angle: -20,  flipLabel: true},
+  {id:'sensemaking', label:'Sensemaking',                angle:  62,  flipLabel: false},
+  {id:'competence',  label:'Competence\nalignment',      angle: 108,  flipLabel: true},
+  {id:'org_embed',   label:'Organisational\nembedding',  angle: 152,  flipLabel: false},
+  {id:'trust',       label:'Trust &\ntransparency',      angle: 200,  flipLabel: false},
+  {id:'reflection',  label:'Reflection\n(Holm)',         angle: 248,  flipLabel: false},
+];
+const phaseContent={},phaseNotes={};
+FLOWERS.forEach(f=>{
+  phaseContent[f.id]=['Describe the Exploration phase for '+f.label.replace('\n',' ')+' here.','Describe the Analysis phase for '+f.label.replace('\n',' ')+' here.','Describe the Adaptation phase for '+f.label.replace('\n',' ')+' here.'];
+  phaseNotes[f.id]=['','',''];
+});
+const state={flower:null,step:null},pinned={flower:null,step:null},hits=[];
+function toR(d){return d*PI/180;}
+function getRings(isAct,actStep){
+  if(!isAct)return BASE;
+  return BASE.map((r,i)=>{
+    if(i===actStep)return{ri:r.ri-(i===0?10:0),ro:r.ro+(i===0?72:i===1?60:50),sp:r.sp+0.22};
+    return{ri:r.ri,ro:r.ro,sp:r.sp*0.70};
+  });
+}
+function drawPetal(ctx,angle,ri,ro,sp,color,alpha){
+  const h=sp/2,a1=angle-h,a2=angle+h;
+  ctx.beginPath();
+  ctx.arc(CX,CY,ri,a1,a2);
+  const o1x=CX+ro*Math.cos(a2),o1y=CY+ro*Math.sin(a2),o2x=CX+ro*Math.cos(a1),o2y=CY+ro*Math.sin(a1);
+  const capX=CX+(ro+28)*Math.cos(angle),capY=CY+(ro+28)*Math.sin(angle);
+  ctx.lineTo(o1x,o1y);ctx.quadraticCurveTo(capX,capY,o2x,o2y);ctx.closePath();
+  ctx.fillStyle=color;ctx.globalAlpha=alpha;ctx.fill();ctx.globalAlpha=1;
+  ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.lineWidth=1.8;ctx.stroke();
+}
+function inPetal(px,py,angle,ri,ro,sp){
+  const dx=px-CX,dy=py-CY,d=Math.sqrt(dx*dx+dy*dy);
+  if(d<ri-8||d>ro+30)return false;
+  let a=Math.atan2(dy,dx)-angle;
+  while(a>PI)a-=TAU;while(a<-PI)a+=TAU;
+  return Math.abs(a)<sp/2+0.08;
+}
+function rotText(ctx,text,x,y,angle,size,weight,color,forceFlip){
+  ctx.save();ctx.translate(x,y);
+  let rot=angle+PI/2;
+  if(forceFlip){rot+=PI;}else if(Math.cos(rot+PI/2)<0){rot+=PI;}
+  ctx.rotate(rot);ctx.font=`${weight} ${size}px 'Segoe UI',system-ui,sans-serif`;
+  ctx.fillStyle=color;ctx.textAlign='center';ctx.textBaseline='middle';
+  const lines=text.split('\n'),lh=size*1.35,oy=-(lines.length-1)*lh/2;
+  lines.forEach((l,i)=>ctx.fillText(l,0,oy+i*lh));ctx.restore();
+}
+function draw(){
+  const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,700,700);hits.length=0;
+  FLOWERS.forEach(f=>{
+    const angle=toR(f.angle),isAct=state.flower===f.id,isPinned=pinned.flower===f.id;
+    const showExp=isAct||(isPinned&&!isAct),expStep=isAct?state.step:pinned.step;
+    const rings=getRings(showExp,expStep),maxRo=Math.max(...rings.map(r=>r.ro)),blobD=maxRo+32;
+    const bx=CX+blobD*Math.cos(angle),by=CY+blobD*Math.sin(angle);
+    ctx.save();ctx.translate(bx,by);ctx.rotate(angle+PI/2);
+    ctx.beginPath();ctx.ellipse(0,0,48,28,0,0,TAU);
+    ctx.fillStyle='#b8b87a';ctx.globalAlpha=0.85;ctx.fill();ctx.globalAlpha=1;ctx.restore();
+    for(let si=rings.length-1;si>=0;si--){
+      const r=rings[si],isStAct=(isAct&&state.step===si)||(isPinned&&!isAct&&pinned.step===si);
+      const alpha=isStAct?1:showExp?0.68:0.93;
+      drawPetal(ctx,angle,r.ri,r.ro,r.sp,SC[si],alpha);
+      hits.push({flower:f.id,step:si,angle,ri:r.ri,ro:r.ro,sp:r.sp});
+    }
+    if(isPinned&&!isAct){
+      const pr=getRings(true,pinned.step)[pinned.step],h=pr.sp/2,a1=angle-h,a2=angle+h;
+      ctx.beginPath();ctx.arc(CX,CY,pr.ri,a1,a2);
+      const o1x=CX+pr.ro*Math.cos(a2),o1y=CY+pr.ro*Math.sin(a2),o2x=CX+pr.ro*Math.cos(a1),o2y=CY+pr.ro*Math.sin(a1);
+      const capX=CX+(pr.ro+28)*Math.cos(angle),capY=CY+(pr.ro+28)*Math.sin(angle);
+      ctx.lineTo(o1x,o1y);ctx.quadraticCurveTo(capX,capY,o2x,o2y);ctx.closePath();
+      ctx.strokeStyle=SC[pinned.step];ctx.lineWidth=3.5;ctx.globalAlpha=0.5;ctx.stroke();ctx.globalAlpha=1;
+    }
+    rotText(ctx,f.label,bx,by,angle,10.5,'600','#363620',f.flipLabel);
+  });
+  ctx.beginPath();ctx.arc(CX,CY,PINK_R,0,TAU);ctx.fillStyle='#f2a0d0';ctx.fill();
+  INNER.forEach(seg=>{
+    ctx.beginPath();ctx.moveTo(CX,CY);ctx.arc(CX,CY,PINK_R-8,seg.start,seg.end);ctx.closePath();
+    ctx.fillStyle=seg.color;ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.stroke();
+    const mid=(seg.start+seg.end)/2,td=(PINK_R-8)*0.63;
+    rotText(ctx,seg.label,CX+td*Math.cos(mid),CY+td*Math.sin(mid),mid-PI/2,12,'600','#fff',false);
+  });
+  ctx.beginPath();ctx.arc(CX,CY,CORE_R,0,TAU);ctx.fillStyle='#5a1870';ctx.fill();
+  ctx.font="700 13px 'Segoe UI',system-ui,sans-serif";ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('PA-STAIR',CX,CY-8);ctx.font="400 11px 'Segoe UI',system-ui,sans-serif";ctx.fillText('Framework',CX,CY+9);
+}
+document.getElementById('c').addEventListener('click',function(e){
+  const rect=this.getBoundingClientRect(),sx=700/rect.width,sy=700/rect.height;
+  const px=(e.clientX-rect.left)*sx,py=(e.clientY-rect.top)*sy;
+  let hit=null;
+  for(let i=hits.length-1;i>=0;i--){const h=hits[i];if(inPetal(px,py,h.angle,h.ri,h.ro,h.sp)){hit=h;break;}}
+  if(!hit||(state.flower===hit.flower&&state.step===hit.step)){state.flower=null;state.step=null;closeInfo();draw();return;}
+  state.flower=hit.flower;state.step=hit.step;draw();openInfo(FLOWERS.find(f=>f.id===hit.flower),hit.step);
+});
+function closeInfo(){
+  document.getElementById('info-panel').classList.remove('visible');
+  document.getElementById('placeholder-info').style.display='flex';
+  document.getElementById('hint').textContent='Click any stage in a flower to explore its content';
+  document.getElementById('notes-context').textContent='No phase selected';
+}
+function openInfo(flower,si){
+  document.getElementById('placeholder-info').style.display='none';
+  document.getElementById('info-panel').classList.add('visible');
+  document.getElementById('hint').textContent='';
+  const isPinned=pinned.flower===flower.id&&pinned.step===si;
+  const strip=document.getElementById('pin-strip');
+  strip.classList.toggle('visible',isPinned);
+  if(isPinned)document.getElementById('pin-strip-text').textContent=SN[si]+' — '+flower.label.replace('\n',' ')+' is pinned';
+  document.getElementById('panel-title').textContent=flower.label.replace('\n',' ');
+  document.getElementById('panel-dot').style.background=SC[si];
+  document.getElementById('panel-stage-lbl').textContent=SN[si];
+  const tabs=document.getElementById('stage-tabs');tabs.innerHTML='';
+  SN.forEach((name,i)=>{
+    const b=document.createElement('button');b.className='stage-tab'+(i===si?' active':'');b.textContent=name;
+    if(i===si)b.style.background=SC[i];b.onclick=()=>{state.step=i;draw();openInfo(flower,i);};tabs.appendChild(b);
+  });
+  const ta=document.getElementById('info-textarea');ta.value=phaseContent[flower.id][si];ta.style.borderColor=SC[si]+'99';
+  ta.oninput=()=>document.getElementById('save-confirm').classList.remove('show');
+  document.getElementById('save-btn').onclick=()=>{phaseContent[flower.id][si]=ta.value;const sc=document.getElementById('save-confirm');sc.classList.add('show');setTimeout(()=>sc.classList.remove('show'),2200);};
+  const pinBtn=document.getElementById('pin-btn'),alreadyPinned=pinned.flower===flower.id&&pinned.step===si;
+  pinBtn.classList.toggle('pinned',alreadyPinned);pinBtn.textContent=alreadyPinned?'Unpin this phase':'Choose this phase';
+  pinBtn.onclick=()=>{
+    if(pinned.flower===flower.id&&pinned.step===si){pinned.flower=null;pinned.step=null;}
+    else{pinned.flower=flower.id;pinned.step=si;}
+    draw();openInfo(flower,si);
+  };
+  document.getElementById('notes-context').textContent=flower.label.replace('\n',' ')+' — '+SN[si];
+  const nta=document.getElementById('notes-textarea');nta.value=phaseNotes[flower.id][si];
+  nta.oninput=()=>document.getElementById('notes-confirm').classList.remove('show');
+  document.getElementById('notes-save-btn').onclick=()=>{phaseNotes[flower.id][si]=nta.value;const nc=document.getElementById('notes-confirm');nc.classList.add('show');setTimeout(()=>nc.classList.remove('show'),2200);};
+}
+draw();
+</script>
+</body>
+</html>
