@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PA-STAIR Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;min-height:100vh;background:#f2ede4;font-family:'Barlow',system-ui,sans-serif;}
+
+header{padding:2.2rem 3rem 0;}
+header h2{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:28px;font-weight:800;
+  color:#4a5220;letter-spacing:0.12em;
+  text-transform:uppercase;
+}
+.underline{width:180px;height:4px;background:#c0390a;margin-top:10px;border-radius:2px;}
+
+.page-layout{
+  display:grid;
+  grid-template-columns:180px 1fr 300px;
+  grid-template-rows:auto;
+  gap:0;
+  padding:1rem 2rem 2rem 2rem;
+  align-items:start;
+  min-height:calc(100vh - 100px);
+}
+
+/* ── LEGEND ── */
+.legend{padding-top:2rem;}
+.legend-heading{font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#aaa;margin-bottom:1.4rem;}
+.legend-item{display:flex;align-items:center;gap:14px;margin-bottom:1.6rem;}
+.legend-shape{width:38px;height:60px;flex-shrink:0;}
+.legend-lbl{font-size:14px;color:#444;font-weight:500;line-height:1.3;}
+
+/* ── CANVAS AREA ── */
+.canvas-area{display:flex;flex-direction:column;align-items:center;padding-top:0.5rem;}
+#c{display:block;cursor:pointer;}
+#hint{font-size:12px;color:#bbb;font-style:italic;text-align:center;margin-top:6px;min-height:18px;}
+
+/* ── RIGHT PANELS ── */
+.right-col{padding-top:1.5rem;display:flex;flex-direction:column;gap:0.9rem;}
+
+.panel-placeholder{
+  background:rgba(0,0,0,0.03);
+  border:1px dashed #d8d4cc;
+  border-radius:10px;padding:1.8rem 1.4rem;
+  text-align:center;color:#ccc;font-size:13px;font-style:italic;
+  min-height:140px;display:flex;align-items:center;justify-content:center;
+}
+
+.info-panel{
+  background:#fff;
+  border:1px solid #e8e4dc;
+  border-radius:10px;overflow:hidden;
+  box-shadow:0 1px 8px rgba(0,0,0,0.05);
+  display:none;
+}
+.info-panel.visible{display:block;}
+
+.pinned-pins{display:none;flex-wrap:wrap;gap:5px;padding:0.6rem 1.1rem 0;}
+.pinned-pins.visible{display:flex;}
+.pin-tag{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:600;color:#fff;
+  padding:3px 9px;border-radius:12px;
+  cursor:pointer;
+}
+.pin-tag .x{opacity:0.7;font-size:12px;margin-left:2px;}
+.pin-tag:hover .x{opacity:1;}
+
+.panel-top{padding:0.9rem 1.1rem 0.3rem;}
+.stage-tabs{display:flex;gap:5px;margin-bottom:0.6rem;flex-wrap:wrap;}
+.stage-tab{
+  font-size:11px;padding:4px 12px;border-radius:16px;
+  border:1px solid #ddd;cursor:pointer;color:#888;
+  background:transparent;font-family:inherit;transition:all .15s;
+}
+.stage-tab:hover{background:#f5f5f5;}
+.stage-tab.active{color:#fff;border-color:transparent;font-weight:600;}
+
+.panel-header{display:flex;align-items:center;gap:8px;}
+.panel-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.panel-title{font-size:15px;font-weight:600;color:#1a1a1a;}
+.panel-stage-lbl{font-size:10px;color:#bbb;text-transform:uppercase;letter-spacing:.08em;padding:0.2rem 1.1rem 0;}
+
+.edit-wrap{padding:0.5rem 1.1rem 0.5rem;}
+.edit-lbl{font-size:10px;color:#ccc;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;}
+textarea{
+  width:100%;min-height:80px;
+  background:#fafaf8;border:1px solid #ebe8e2;border-radius:7px;
+  padding:9px 11px;font-size:13px;color:#333;
+  font-family:inherit;line-height:1.65;resize:vertical;outline:none;
+  transition:border-color .15s;
+}
+textarea:focus{border-color:#aaa;background:#fff;}
+
+.panel-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 1.1rem 0.9rem;gap:7px;flex-wrap:wrap;
+}
+.btn{
+  font-size:12px;padding:5px 14px;border-radius:7px;
+  border:1px solid #ccc;cursor:pointer;background:transparent;
+  color:#333;font-family:inherit;transition:all .15s;white-space:nowrap;
+}
+.btn:hover{background:#f0f0f0;}
+.btn-pin{border-color:#3a7ab5;color:#3a7ab5;font-weight:600;}
+.btn-pin:hover{background:#eef4fb;}
+.btn-pin.pinned{background:#3a7ab5;color:#fff;}
+.btn-pin.pinned:hover{background:#1f5f8a;}
+.save-confirm{font-size:11px;color:#2e7d32;opacity:0;transition:opacity .3s;}
+.save-confirm.show{opacity:1;}
+
+/* Notes */
+.notes-box{
+  background:#fff;border:1px solid #e8e4dc;border-radius:10px;overflow:hidden;
+  box-shadow:0 1px 8px rgba(0,0,0,0.04);
+}
+.notes-head{
+  padding:0.75rem 1.1rem 0.35rem;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid #f4f1eb;
+}
+.notes-title{font-size:13px;font-weight:600;color:#666;}
+.notes-ctx{font-size:11px;color:#ccc;font-style:italic;}
+.notes-body{padding:0.45rem 1.1rem 0.6rem;}
+.notes-body textarea{min-height:65px;}
+.notes-foot{padding:0 1.1rem 0.75rem;display:flex;justify-content:flex-end;align-items:center;gap:8px;}
+</style>
+</head>
+<body>
+<header>
+  <h2>Framework - Public Sector Institution</h2>
+  <div class="underline"></div>
+</header>
+
+<div class="page-layout">
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-heading">Phases</div>
+    <div class="legend-item">
+      <svg class="legend-shape" viewBox="0 0 38 60">
+        <path d="M5,55 Q4,30 19,4 Q34,30 33,55 Q19,62 5,55Z" fill="#3d5068"/>
+      </svg>
+      <div class="legend-lbl">Adaptation<br>phase</div>
+    </div>
+    <div class="legend-item">
+      <svg class="legend-shape" viewBox="0 0 38 60">
+        <path d="M5,55 Q4,30 19,4 Q34,30 33,55 Q19,62 5,55Z" fill="#3278b0"/>
+      </svg>
+      <div class="legend-lbl">Analysis<br>phase</div>
+    </div>
+    <div class="legend-item">
+      <svg class="legend-shape" viewBox="0 0 38 60">
+        <path d="M5,55 Q4,30 19,4 Q34,30 33,55 Q19,62 5,55Z" fill="#7bbdd8"/>
+      </svg>
+      <div class="legend-lbl">Exploration<br>phase</div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-area">
+    <canvas id="c" width="780" height="780"></canvas>
+    <div id="hint">Click any petal stage to explore its content</div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right-col">
+    <!-- Pinned tags -->
+    <div class="pinned-pins" id="pinned-tags"></div>
+
+    <div class="panel-placeholder" id="ph">Click a petal stage to see its information here</div>
+
+    <div class="info-panel" id="info-panel">
+      <div class="panel-top">
+        <div class="stage-tabs" id="stage-tabs"></div>
+        <div class="panel-header">
+          <div class="panel-dot" id="panel-dot"></div>
+          <div class="panel-title" id="panel-title"></div>
+        </div>
+      </div>
+      <div class="panel-stage-lbl" id="panel-stage-lbl"></div>
+      <div class="edit-wrap">
+        <div class="edit-lbl">Content — click to edit</div>
+        <textarea id="info-ta" placeholder="Describe this phase…"></textarea>
+      </div>
+      <div class="panel-footer">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-pin" id="pin-btn">Choose this phase</button>
+          <button class="btn" id="save-btn">Save</button>
+        </div>
+        <span class="save-confirm" id="save-confirm">Saved!</span>
+      </div>
+    </div>
+
+    <div class="notes-box">
+      <div class="notes-head">
+        <div class="notes-title">My notes</div>
+        <div class="notes-ctx" id="notes-ctx">No phase selected</div>
+      </div>
+      <div class="notes-body">
+        <textarea id="notes-ta" placeholder="Write your own notes here…"></textarea>
+      </div>
+      <div class="notes-foot">
+        <button class="btn" id="notes-save">Save note</button>
+        <span class="save-confirm" id="notes-confirm">Saved!</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TAU=Math.PI*2,PI=Math.PI;
+const CX=390,CY=390;
+const CORE_R=46,PINK_R=130,BR=PINK_R+3;
+
+// Petal geometry — broad chunky shapes like prototype
+const BASE=[
+  {ri:BR,      ro:BR+80,  sp:0.66},  // Exploration — light blue, innermost
+  {ri:BR+83,   ro:BR+140, sp:0.57},  // Analysis — mid blue
+  {ri:BR+143,  ro:BR+190, sp:0.49},  // Adaptation — dark blue, outermost
+];
+
+// Colors matching prototype precisely
+const SC=['#7bbdd8','#3278b0','#3d5068'];
+const SN=['Exploration phase','Analysis phase','Adaptation phase'];
+
+// 7 flowers evenly at 360/7 apart, starting at -90° (top = Third party vendor)
+const STEP=360/7;
+function toR(d){return d*PI/180;}
+
+const FLOWERS=[
+  {id:'third_party', label:'Third party\nvendor',        angle:-90,          flip:false},
+  {id:'governance',  label:'Governance',                 angle:-90+STEP,     flip:false},
+  {id:'reflection',  label:'Reflection\n(Holm)',         angle:-90+STEP*2,   flip:false},
+  {id:'sensemaking', label:'Sensemaking',                angle:-90+STEP*3,   flip:false},
+  {id:'competence',  label:'Competence\nalignment',      angle:-90+STEP*4,   flip:true},
+  {id:'org_embed',   label:'Organisational\nembedding',  angle:-90+STEP*5,   flip:true},
+  {id:'trust',       label:'Trust &\ntransparency',      angle:-90+STEP*6,   flip:false},
+];
+
+// Inner segments — boundaries sit between adjacent flowers
+// Tech: covers Third party vendor + Governance (top-right)
+// Org:  covers Reflection + Sensemaking + Competence (bottom-right + bottom)
+// Human: covers Org embedding + Trust (left)
+const fa=FLOWERS.map(f=>toR(f.angle));
+function midAngle(a,b){return (a+b)/2;}
+const B_TH = midAngle(fa[6], fa[0]+TAU) - TAU; // between trust & third_party (wrapping top)
+const B_GO = midAngle(fa[1], fa[2]);             // between governance & reflection
+const B_CO = midAngle(fa[4], fa[5]);             // between competence & org_embed
+
+const INNER=[
+  {label:'Technology',   color:'#b068c8', start:B_TH,       end:B_GO},
+  {label:'Organisation', color:'#d87ab0', start:B_GO,       end:B_CO},
+  {label:'Human',        color:'#c058a0', start:B_CO,       end:B_TH+TAU},
+];
+
+// Content stores
+const phaseContent={}, phaseNotes={};
+FLOWERS.forEach(f=>{
+  phaseContent[f.id]=[
+    'Describe the Exploration phase for '+f.label.replace('\n',' ')+' here.',
+    'Describe the Analysis phase for '+f.label.replace('\n',' ')+' here.',
+    'Describe the Adaptation phase for '+f.label.replace('\n',' ')+' here.',
+  ];
+  phaseNotes[f.id]=['','',''];
+});
+
+// State
+const cur={flower:null,step:null};
+// pinnedMap: { flowerId: stepIndex } — multiple flowers can be pinned simultaneously
+const pinnedMap={};
+const hits=[];
+
+function getRings(isActive, activeStep){
+  if(!isActive) return BASE;
+  return BASE.map((r,i)=>{
+    if(i===activeStep) return{ri:r.ri-(i===0?12:0), ro:r.ro+(i===0?80:i===1?66:54), sp:r.sp+0.22};
+    return{ri:r.ri, ro:r.ro, sp:r.sp*0.70};
+  });
+}
+
+function drawPetal(ctx,angle,ri,ro,sp,color,alpha,strokeW){
+  const h=sp/2,a1=angle-h,a2=angle+h;
+  ctx.beginPath();
+  ctx.arc(CX,CY,ri,a1,a2);
+  const o1x=CX+ro*Math.cos(a2),o1y=CY+ro*Math.sin(a2);
+  const o2x=CX+ro*Math.cos(a1),o2y=CY+ro*Math.sin(a1);
+  const capX=CX+(ro+30)*Math.cos(angle),capY=CY+(ro+30)*Math.sin(angle);
+  ctx.lineTo(o1x,o1y);
+  ctx.quadraticCurveTo(capX,capY,o2x,o2y);
+  ctx.closePath();
+  ctx.fillStyle=color;ctx.globalAlpha=alpha;ctx.fill();ctx.globalAlpha=1;
+  ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.lineWidth=strokeW||1.8;ctx.stroke();
+}
+
+function inPetal(px,py,angle,ri,ro,sp){
+  const dx=px-CX,dy=py-CY,d=Math.sqrt(dx*dx+dy*dy);
+  if(d<ri-10||d>ro+34) return false;
+  let a=Math.atan2(dy,dx)-angle;
+  while(a>PI) a-=TAU; while(a<-PI) a+=TAU;
+  return Math.abs(a)<sp/2+0.09;
+}
+
+function rotText(ctx,text,x,y,angle,size,weight,color,forceFlip){
+  ctx.save();ctx.translate(x,y);
+  let rot=angle+PI/2;
+  if(forceFlip){rot+=PI;}else if(Math.cos(rot+PI/2)<0){rot+=PI;}
+  ctx.rotate(rot);
+  ctx.font=`${weight} ${size}px 'Barlow',system-ui,sans-serif`;
+  ctx.fillStyle=color;ctx.textAlign='center';ctx.textBaseline='middle';
+  const lines=text.split('\n'),lh=size*1.3,oy=-(lines.length-1)*lh/2;
+  lines.forEach((l,i)=>ctx.fillText(l,0,oy+i*lh));
+  ctx.restore();
+}
+
+function draw(){
+  const canvas=document.getElementById('c');
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,780,780);
+  hits.length=0;
+
+  FLOWERS.forEach(f=>{
+    const angle=toR(f.angle);
+    const isAct=cur.flower===f.id;
+    const isPinned=pinnedMap.hasOwnProperty(f.id);
+    // A flower is expanded if it is currently active OR pinned
+    const showExp=isAct||(isPinned&&!isAct);
+    const expStep=isAct?cur.step:pinnedMap[f.id];
+    const rings=getRings(showExp,expStep);
+    const maxRo=Math.max(...rings.map(r=>r.ro));
+    const blobD=maxRo+34;
+    const bx=CX+blobD*Math.cos(angle),by=CY+blobD*Math.sin(angle);
+
+    // Olive capsule blob
+    ctx.save();ctx.translate(bx,by);ctx.rotate(angle+PI/2);
+    ctx.beginPath();ctx.ellipse(0,0,50,28,0,0,TAU);
+    ctx.fillStyle='#b0ae72';ctx.globalAlpha=0.82;ctx.fill();ctx.globalAlpha=1;
+    ctx.restore();
+
+    // Draw rings outermost first
+    for(let si=rings.length-1;si>=0;si--){
+      const r=rings[si];
+      const isStAct=(isAct&&cur.step===si)||(isPinned&&!isAct&&pinnedMap[f.id]===si);
+      const alpha=isStAct?1:showExp?0.65:0.92;
+      drawPetal(ctx,angle,r.ri,r.ro,r.sp,SC[si],alpha,isStAct?2.5:1.6);
+      hits.push({flower:f.id,step:si,angle,ri:r.ri,ro:r.ro,sp:r.sp});
+    }
+
+    // Pinned glow outline for non-active pinned flowers
+    if(isPinned&&!isAct){
+      const ps=pinnedMap[f.id];
+      const pr=getRings(true,ps)[ps];
+      const h=pr.sp/2,a1=angle-h,a2=angle+h;
+      ctx.beginPath();
+      ctx.arc(CX,CY,pr.ri,a1,a2);
+      const o1x=CX+pr.ro*Math.cos(a2),o1y=CY+pr.ro*Math.sin(a2);
+      const o2x=CX+pr.ro*Math.cos(a1),o2y=CY+pr.ro*Math.sin(a1);
+      const capX=CX+(pr.ro+30)*Math.cos(angle),capY=CY+(pr.ro+30)*Math.sin(angle);
+      ctx.lineTo(o1x,o1y);ctx.quadraticCurveTo(capX,capY,o2x,o2y);ctx.closePath();
+      ctx.strokeStyle=SC[ps];ctx.lineWidth=4;ctx.globalAlpha=0.55;ctx.stroke();ctx.globalAlpha=1;
+    }
+
+    rotText(ctx,f.label,bx,by,angle,10.5,'500','#3a3820',f.flip);
+  });
+
+  // Pink ring
+  ctx.beginPath();ctx.arc(CX,CY,PINK_R,0,TAU);ctx.fillStyle='#efa8cc';ctx.fill();
+
+  // Inner segments
+  INNER.forEach(seg=>{
+    ctx.beginPath();ctx.moveTo(CX,CY);
+    ctx.arc(CX,CY,PINK_R-8,seg.start,seg.end);
+    ctx.closePath();ctx.fillStyle=seg.color;ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.stroke();
+    const mid=(seg.start+seg.end)/2,td=(PINK_R-8)*0.63;
+    rotText(ctx,seg.label,CX+td*Math.cos(mid),CY+td*Math.sin(mid),mid-PI/2,12,'600','#fff',false);
+  });
+
+  // Core
+  ctx.beginPath();ctx.arc(CX,CY,CORE_R,0,TAU);ctx.fillStyle='#561872';ctx.fill();
+  ctx.font="700 11.5px 'Barlow',system-ui,sans-serif";
+  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('PA-STAIR',CX,CY-6);
+  ctx.font="400 9.5px 'Barlow',system-ui,sans-serif";
+  ctx.fillText('Framework',CX,CY+7);
+}
+
+// ── CLICK ──
+document.getElementById('c').addEventListener('click',function(e){
+  const rect=this.getBoundingClientRect();
+  const sx=780/rect.width,sy=780/rect.height;
+  const px=(e.clientX-rect.left)*sx,py=(e.clientY-rect.top)*sy;
+  let hit=null;
+  for(let i=hits.length-1;i>=0;i--){
+    const h=hits[i];
+    if(inPetal(px,py,h.angle,h.ri,h.ro,h.sp)){hit=h;break;}
+  }
+  if(!hit||(cur.flower===hit.flower&&cur.step===hit.step)){
+    cur.flower=null;cur.step=null;closePanel();draw();return;
+  }
+  cur.flower=hit.flower;cur.step=hit.step;
+  draw();
+  openPanel(FLOWERS.find(f=>f.id===hit.flower),hit.step);
+});
+
+function closePanel(){
+  document.getElementById('info-panel').classList.remove('visible');
+  document.getElementById('ph').style.display='flex';
+  document.getElementById('hint').textContent='Click any petal stage to explore its content';
+  document.getElementById('notes-ctx').textContent='No phase selected';
+}
+
+function openPanel(flower,si){
+  document.getElementById('ph').style.display='none';
+  document.getElementById('info-panel').classList.add('visible');
+  document.getElementById('hint').textContent='';
+  document.getElementById('panel-title').textContent=flower.label.replace('\n',' ');
+  document.getElementById('panel-dot').style.background=SC[si];
+  document.getElementById('panel-stage-lbl').textContent=SN[si];
+
+  // Tabs
+  const tabs=document.getElementById('stage-tabs');tabs.innerHTML='';
+  SN.forEach((name,i)=>{
+    const b=document.createElement('button');
+    b.className='stage-tab'+(i===si?' active':'');b.textContent=name;
+    if(i===si)b.style.background=SC[i];
+    b.onclick=()=>{cur.step=i;draw();openPanel(flower,i);};
+    tabs.appendChild(b);
+  });
+
+  // Textarea
+  const ta=document.getElementById('info-ta');
+  ta.value=phaseContent[flower.id][si];
+  ta.style.borderColor=SC[si]+'99';
+  ta.oninput=()=>document.getElementById('save-confirm').classList.remove('show');
+  document.getElementById('save-btn').onclick=()=>{
+    phaseContent[flower.id][si]=ta.value;
+    const sc=document.getElementById('save-confirm');
+    sc.classList.add('show');setTimeout(()=>sc.classList.remove('show'),2200);
+  };
+
+  // Pin button — per flower, stores step index
+  const pinBtn=document.getElementById('pin-btn');
+  const isPinned=pinnedMap[flower.id]===si;
+  pinBtn.classList.toggle('pinned',isPinned);
+  pinBtn.textContent=isPinned?'Unpin this phase':'Choose this phase';
+  pinBtn.onclick=()=>{
+    if(pinnedMap[flower.id]===si){
+      delete pinnedMap[flower.id];
+    } else {
+      pinnedMap[flower.id]=si; // pin this step for this flower; does not affect other flowers
+    }
+    renderPinnedTags();
+    draw();openPanel(flower,si);
+  };
+
+  // Notes
+  document.getElementById('notes-ctx').textContent=flower.label.replace('\n',' ')+' — '+SN[si];
+  const nta=document.getElementById('notes-ta');
+  nta.value=phaseNotes[flower.id][si];
+  nta.oninput=()=>document.getElementById('notes-confirm').classList.remove('show');
+  document.getElementById('notes-save').onclick=()=>{
+    phaseNotes[flower.id][si]=nta.value;
+    const nc=document.getElementById('notes-confirm');
+    nc.classList.add('show');setTimeout(()=>nc.classList.remove('show'),2200);
+  };
+}
+
+function renderPinnedTags(){
+  const container=document.getElementById('pinned-tags');
+  container.innerHTML='';
+  const keys=Object.keys(pinnedMap);
+  container.classList.toggle('visible',keys.length>0);
+  keys.forEach(fid=>{
+    const si=pinnedMap[fid];
+    const flower=FLOWERS.find(f=>f.id===fid);
+    const tag=document.createElement('div');
+    tag.className='pin-tag';
+    tag.style.background=SC[si];
+    tag.innerHTML=`${flower.label.replace('\n',' ')} <span class="x">×</span>`;
+    tag.title='Click to unpin';
+    tag.onclick=()=>{
+      delete pinnedMap[fid];
+      renderPinnedTags();
+      draw();
+      if(cur.flower===fid) openPanel(flower,cur.step);
+    };
+    container.appendChild(tag);
+  });
+}
+
+draw();
+</script>
+</body>
+</html>
